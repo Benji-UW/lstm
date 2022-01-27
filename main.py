@@ -12,19 +12,21 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper-parameters
 embed_size = 128
-hidden_size = 1024
+hidden_size = 254
 num_layers = 1
 num_epochs = 5
-num_samples = 1000     # number of words to be sampled
 batch_size = 20
-seq_length = 30
-learning_rate = 0.002
+seq_length = 10
+learning_rate = 0.001
 
 # Load "Penn Treebank" dataset
 corpus = Corpus()
-ids = corpus.get_data('data/train.txt', batch_size)
+ids = corpus.get_data('data/wiki.train.tokens', batch_size)
 vocab_size = len(corpus.dictionary)
 num_batches = ids.size(1) // seq_length
+
+test_ids = corpus.transform_to_ids("data/wiki.test.tokens")
+dev_ids = corpus.transform_to_ids("data/wiki.valid.tokens")
 
 
 # RNN based language model
@@ -66,6 +68,7 @@ for epoch in range(num_epochs):
               torch.zeros(num_layers, batch_size, hidden_size).to(device))
     
     for i in range(0, ids.size(1) - seq_length, seq_length):
+        optimizer.zero_grad()
         # Get mini-batch inputs and targets
         inputs = ids[:, i:i+seq_length].to(device)
         targets = ids[:, (i+1):(i+1)+seq_length].to(device)
@@ -82,38 +85,27 @@ for epoch in range(num_epochs):
         optimizer.step()
 
         step = (i+1) // seq_length
-        print ('Epoch [{}/{}], Step[{}/{}], Loss: {:.4f}, Perplexity: {:5.2f}'
-                .format(epoch+1, num_epochs, step, num_batches, loss.item(), np.exp(loss.item())))
+        if step % 100 == 0:
+            print ('Epoch [{}/{}], Step[{}/{}], Loss: {:.4f}, Perplexity: {:5.2f}'
+                    .format(epoch+1, num_epochs, step, num_batches, loss.item(), np.exp(loss.item())))
+    # development set and training set performances
+    for i in range(0, ids.size(1) - seq_length, seq_length):
+        test_inputs = test_ids[:, i:i+seq_length].to(device)
+        test_targets = test_ids[:, (i+1):(i+1)+seq_length].to(device)
 
-# Test the model
-with torch.no_grad():
-    with open('sample.txt', 'w') as f:
-        # Set intial hidden ane cell states
-        state = (torch.zeros(num_layers, 1, hidden_size).to(device),
-                 torch.zeros(num_layers, 1, hidden_size).to(device))
+        outputs, states = model(test_inputs, states)
+        test_loss = criterion(outputs, test_targets.reshape(-1))
+        print("TEST PERPLEXITY " + str(np.exp(loss.item())))
 
-        # Select one word id randomly
-        prob = torch.ones(vocab_size)
-        input = torch.multinomial(prob, num_samples=1).unsqueeze(1).to(device)
+        dev_inputs = dev_ids[:, i:i+seq_length].to(device)
+        dev_targets = dev_ids[:, (i+1):(i+1)+seq_length].to(device)
 
-        for i in range(num_samples):
-            # Forward propagate RNN 
-            output, state = model(input, state)
+        outputs, states = model(dev_inputs, states)
+        test_loss = criterion(outputs, dev_targets.reshape(-1))
+        print("DEV PERPLEXITY " + str(np.exp(loss.item())))
 
-            # Sample a word id
-            prob = output.exp()
-            word_id = torch.multinomial(prob, num_samples=1).item()
 
-            # Fill input with sampled word id for the next time step
-            input.fill_(word_id)
-
-            # File write
-            word = corpus.dictionary.idx2word[word_id]
-            word = '\n' if word == '<eos>' else word + ' '
-            f.write(word)
-
-            if (i+1) % 100 == 0:
-                print('Sampled [{}/{}] words and save to {}'.format(i+1, num_samples, 'sample.txt'))
+    
 
 # Save the model checkpoints
 torch.save(model.state_dict(), 'model.ckpt')

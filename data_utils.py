@@ -44,3 +44,24 @@ class Corpus(object):
         num_batches = ids.size(0) // batch_size
         ids = ids[:num_batches*batch_size]
         return ids.view(batch_size, -1)
+
+    def transform_to_ids(self, path):
+        with open(path, 'r') as f:
+            tokens = 0
+            for line in f:
+                words = line.split() + ['<eos>']
+                tokens += len(words)
+        
+        # Tokenize the file content
+        ids = torch.LongTensor(tokens)
+        token = 0
+        with open(path, 'r') as f:
+            for line in f:
+                words = line.split() + ['<eos>']
+                for word in words:
+                    if word in self.dictionary.word2idx:
+                        ids[token] = self.dictionary.word2idx[word]
+                    else:
+                        ids[token] = self.dictionary.word2idx["UNK"]
+                    token += 1
+        return ids
