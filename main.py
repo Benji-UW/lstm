@@ -15,7 +15,7 @@ embed_size = 128
 hidden_size = 254
 num_layers = 1
 num_epochs = 5
-batch_size = 20
+batch_size = 100
 seq_length = 10
 learning_rate = 0.001
 
@@ -85,7 +85,7 @@ for epoch in range(num_epochs):
         optimizer.step()
 
         step = (i+1) // seq_length
-        if step % 100 == 0:
+        if True:# step % 100 == 0:
             print ('Epoch [{}/{}], Step[{}/{}], Loss: {:.4f}, Perplexity: {:5.2f}'
                     .format(epoch+1, num_epochs, step, num_batches, loss.item(), np.exp(loss.item())))
     # development set and training set performances
