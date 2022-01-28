@@ -16,7 +16,7 @@ hidden_size = 254
 num_layers = 1
 num_epochs = 5
 batch_size = 200
-seq_length = 10
+seq_length = 6
 learning_rate = 0.001
 
 # Load "Penn Treebank" dataset
