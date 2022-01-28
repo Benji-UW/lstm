@@ -24,7 +24,7 @@ class Corpus(object):
 
     def get_data(self, path, batch_size=20):
         # Add words to the dictionary
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="UTF-8") as f:
             tokens = 0
             for line in f:
                 words = line.split() + ['<eos>']
@@ -35,7 +35,7 @@ class Corpus(object):
         # Tokenize the file content
         ids = torch.LongTensor(tokens)
         token = 0
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="UTF-8") as f:
             for line in f:
                 words = line.split() + ['<eos>']
                 for word in words:
@@ -46,7 +46,7 @@ class Corpus(object):
         return ids.view(batch_size, -1)
 
     def transform_to_ids(self, path, batch_size=20):
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="UTF-8") as f:
             tokens = 0
             for line in f:
                 words = line.split() + ['<eos>']
@@ -55,7 +55,7 @@ class Corpus(object):
         # Tokenize the file content
         ids = torch.LongTensor(tokens)
         token = 0
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="UTF-8") as f:
             for line in f:
                 words = line.split() + ['<eos>']
                 for word in words:
