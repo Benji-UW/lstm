@@ -45,7 +45,7 @@ class Corpus(object):
         ids = ids[:num_batches*batch_size]
         return ids.view(batch_size, -1)
 
-    def transform_to_ids(self, path):
+    def transform_to_ids(self, path, batch_size=20):
         with open(path, 'r') as f:
             tokens = 0
             for line in f:
@@ -64,4 +64,6 @@ class Corpus(object):
                     else:
                         ids[token] = self.dictionary.word2idx["UNK"]
                     token += 1
-        return ids
+        num_batches = ids.size(0) // batch_size
+        ids = ids[:num_batches*batch_size]
+        return ids.view(batch_size, -1)

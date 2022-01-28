@@ -15,7 +15,7 @@ embed_size = 128
 hidden_size = 254
 num_layers = 1
 num_epochs = 5
-batch_size = 100
+batch_size = 200
 seq_length = 10
 learning_rate = 0.001
 
@@ -25,8 +25,8 @@ ids = corpus.get_data('data/wiki.train.tokens', batch_size)
 vocab_size = len(corpus.dictionary)
 num_batches = ids.size(1) // seq_length
 
-test_ids = corpus.transform_to_ids("data/wiki.test.tokens")
-dev_ids = corpus.transform_to_ids("data/wiki.valid.tokens")
+test_ids = corpus.transform_to_ids("data/wiki.test.tokens", batch_size)
+dev_ids = corpus.transform_to_ids("data/wiki.valid.tokens", batch_size)
 
 
 # RNN based language model
@@ -85,7 +85,7 @@ for epoch in range(num_epochs):
         optimizer.step()
 
         step = (i+1) // seq_length
-        if True:# step % 100 == 0:
+        if step % 200 == 0:
             print ('Epoch [{}/{}], Step[{}/{}], Loss: {:.4f}, Perplexity: {:5.2f}'
                     .format(epoch+1, num_epochs, step, num_batches, loss.item(), np.exp(loss.item())))
     # development set and training set performances
@@ -95,14 +95,14 @@ for epoch in range(num_epochs):
 
         outputs, states = model(test_inputs, states)
         test_loss = criterion(outputs, test_targets.reshape(-1))
-        print("TEST PERPLEXITY " + str(np.exp(loss.item())))
+        print("TEST PERPLEXITY " + str(np.exp(test_loss.item())))
 
         dev_inputs = dev_ids[:, i:i+seq_length].to(device)
         dev_targets = dev_ids[:, (i+1):(i+1)+seq_length].to(device)
 
         outputs, states = model(dev_inputs, states)
-        test_loss = criterion(outputs, dev_targets.reshape(-1))
-        print("DEV PERPLEXITY " + str(np.exp(loss.item())))
+        dev_loss = criterion(outputs, dev_targets.reshape(-1))
+        print("DEV PERPLEXITY " + str(np.exp(dev_loss.item())))
 
 
     
